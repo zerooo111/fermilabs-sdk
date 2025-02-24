@@ -42,16 +42,21 @@ export class LiquidityVaultClient {
     ixs: TransactionInstruction[],
     opts: any = {}
   ): Promise<string> {
-    return await sendTransaction(
-      this.program.provider as AnchorProvider,
-      ixs,
-      opts.alts ?? [],
-      {
-        postSendTxCallback: this.postSendTxCallback,
-        txConfirmationCommitment: this.txConfirmationCommitment,
-        ...opts,
-      }
-    );
+    try {
+      return await sendTransaction(
+        this.program.provider as AnchorProvider,
+        ixs,
+        opts.alts ?? [],
+        {
+          postSendTxCallback: this.postSendTxCallback,
+          txConfirmationCommitment: this.txConfirmationCommitment,
+          ...opts,
+        }
+      );
+    } catch (e) {
+      console.log("Error sending transaction", e);
+      throw e;
+    }
   }
 
   /**
@@ -89,17 +94,27 @@ export class LiquidityVaultClient {
     );
   }
 
+  async getVaultTokenAccount(vaultState: PublicKey) {
+    return PublicKey.findProgramAddress(
+      [Buffer.from("vault_token_account"), vaultState.toBuffer()],
+      this.programId
+    );
+  }
+
   /**
    * Initialize a new vault for a given token mint
    */
   async createVault(tokenMint: PublicKey, whitelistedProgram: PublicKey) {
     const [vaultState] = await this.getVaultStatePDA(tokenMint);
     const [vaultAuthority] = await this.getVaultAuthorityPDA(vaultState);
-    const vaultTokenAccount = await getAssociatedTokenAddress(
-      tokenMint,
-      vaultAuthority,
-      true
-    );
+    const [vaultTokenAccount] = await this.getVaultTokenAccount(vaultState);
+
+    console.log({
+      vaultState: vaultState.toBase58(),
+      vaultAuthority: vaultAuthority.toBase58(),
+      vaultTokenAccount: vaultTokenAccount.toBase58(),
+      payer: this.walletPk.toBase58(),
+    });
 
     const ix = await this.program.methods
       .initialize(whitelistedProgram)

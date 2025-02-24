@@ -1,18 +1,21 @@
-import { PublicKey } from "@solana/web3.js";
+import { Keypair } from "@solana/web3.js";
 import { vault_program } from "../constants";
 import { initLiquidityVaultClient } from "../utils";
+import { createMint } from "../../src/index";
 
 const main = async () => {
   // Initialize the vault client with transaction callback
   const vaultClient = initLiquidityVaultClient(
-    "./test-keypairs/alice/key.json"
+    "../../test-keypairs/alice/key.json"
   );
 
-  const tokenMint = new PublicKey("YOUR TOKEN ACCOUNT HERE");
+  const tokenMint = Keypair.generate();
+
+  await createMint(vaultClient.provider, tokenMint, 6);
 
   // Create vault for the token
   await vaultClient
-    .createVault(tokenMint, vault_program)
+    .createVault(tokenMint.publicKey, vault_program)
     .then(() => console.log("Token vault created successfully"));
 };
 

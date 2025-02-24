@@ -1,5 +1,5 @@
-import { type AnchorProvider } from '@coral-xyz/anchor';
-import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet';
+import { type AnchorProvider } from "@coral-xyz/anchor";
+import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import {
   type AddressLookupTableAccount,
   ComputeBudgetProgram,
@@ -8,13 +8,13 @@ import {
   type TransactionInstruction,
   VersionedTransaction,
   Transaction,
-} from '@solana/web3.js';
+} from "@solana/web3.js";
 
 export async function sendTransaction(
   provider: AnchorProvider,
   ixs: TransactionInstruction[],
   alts: AddressLookupTableAccount[],
-  opts: any = {},
+  opts: any = {}
 ): Promise<string> {
   const connection = provider.connection;
   if ((connection as any).banksClient !== undefined) {
@@ -32,19 +32,19 @@ export async function sendTransaction(
     }
 
     await (connection as any).banksClient.processTransaction(tx);
-    return '';
+    return "";
   }
   const latestBlockhash =
     opts?.latestBlockhash ??
     (await connection.getLatestBlockhash(
       opts?.preflightCommitment ??
         provider.opts.preflightCommitment ??
-        'finalized',
+        "finalized"
     ));
 
   const payer = provider.wallet;
 
-  if (opts?.prioritizationFee !== null && opts.prioritizationFee !== 0) {
+  if (opts?.prioritizationFee && opts.prioritizationFee !== 0) {
     ixs = [createComputeBudgetIx(opts.prioritizationFee), ...ixs];
   }
 
@@ -64,11 +64,11 @@ export async function sendTransaction(
   }
 
   if (
-    typeof payer.signTransaction === 'function' &&
-    !(payer instanceof NodeWallet || payer.constructor.name === 'NodeWallet')
+    typeof payer.signTransaction === "function" &&
+    !(payer instanceof NodeWallet || payer.constructor.name === "NodeWallet")
   ) {
     vtx = (await payer.signTransaction(
-      vtx as any,
+      vtx as any
     )) as unknown as VersionedTransaction;
   } else {
     // Maybe this path is only correct for NodeWallet?
@@ -98,7 +98,7 @@ export async function sendTransaction(
   }
 
   const txConfirmationCommitment =
-    opts?.txConfirmationCommitment ?? 'processed';
+    opts?.txConfirmationCommitment ?? "processed";
   let status: any;
   if (
     latestBlockhash.blockhash != null &&
@@ -111,7 +111,7 @@ export async function sendTransaction(
           blockhash: latestBlockhash.blockhash,
           lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
         },
-        txConfirmationCommitment,
+        txConfirmationCommitment
       )
     ).value;
   } else {
@@ -119,8 +119,8 @@ export async function sendTransaction(
       await connection.confirmTransaction(signature, txConfirmationCommitment)
     ).value;
   }
-  if (status.err !== '' && status.err !== null) {
-    console.warn('Tx status: ', JSON.stringify(status));
+  if (status.err !== "" && status.err !== null) {
+    console.warn("Tx status: ", JSON.stringify(status));
     throw new OpenBookError({
       txid: signature,
       message: `${JSON.stringify(status)}`,
@@ -131,7 +131,7 @@ export async function sendTransaction(
 }
 
 export const createComputeBudgetIx = (
-  microLamports: number,
+  microLamports: number
 ): TransactionInstruction => {
   const computeBudgetIx = ComputeBudgetProgram.setComputeUnitPrice({
     microLamports,
