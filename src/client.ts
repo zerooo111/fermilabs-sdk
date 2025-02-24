@@ -1116,14 +1116,20 @@ export class FermiClient {
     orderid: BN,
     qty: BN,
     side: PlaceOrderArgs["side"],
-    kp: Keypair
+    kp: Keypair,
+    vaultState: PublicKey,
+    vaultAuthority: PublicKey,
+    userStatePda: PublicKey,
+    caller: PublicKey,
+    vaultProgram: PublicKey,
+    vaultTokenAccount: PublicKey
     ): Promise<[TransactionInstruction, Signer[]]> {
       // Create the additional compute budget instructions
     const computeUnitLimitInstruction =
       ComputeBudgetProgram.setComputeUnitLimit({
         units: 800000,
       });
-
+    //let vault_token_account = new PublicKey("DtCyyL1W5Ek8vYTBgCov6JawrCtSH4eN9k44J5KVwb6k");
     // Create the main instruction with the required accounts
     const signer = this.walletPk;
     const mainInstruction = await this.program.methods
@@ -1145,6 +1151,12 @@ export class FermiClient {
         taker,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
+        vaultState: vaultState,
+        vaultAuthority: vaultAuthority,
+        userState: userStatePda,
+        caller: caller,
+        vaultProgram: vaultProgram,
+        vaultTokenAccount: vaultTokenAccount,
       })
       .instruction();
 

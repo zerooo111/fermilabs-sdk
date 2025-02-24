@@ -3,7 +3,7 @@ import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { FermiClient, createMint, getLocalKeypair } from "../src";
 import { OWNER_KEYPAIR, programId, rpcUrl } from "./constants";
 
-const secretKeyPath = "/Users/Zero/.config/solana/id.json";
+const secretKeyPath = "/Users/dm/.config/solana/id.json";
 
 
 const main = async () => {
@@ -28,11 +28,11 @@ const main = async () => {
   await createMint(provider, pcMint, 6);
 
   const quoteMint = new PublicKey(coinMint.publicKey.toBase58());
-  const baseMint = new PublicKey(pcMint.publicKey.toBase58());
+  const baseMint = new PublicKey("6YwtM2Kh3Pg7ibpC6yaFmbrHdXvvHKcFKSzr6oeVvdYx");
 
   // Define market parameter
   const quoteLotSize = new BN(1000000);
-  const baseLotSize = new BN(1000000000);
+  const baseLotSize = new BN(10000000);
   const makerFee = new BN(0);
   const takerFee = new BN(0);
   const timeExpiry = new BN(0);

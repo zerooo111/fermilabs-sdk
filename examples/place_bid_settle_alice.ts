@@ -3,12 +3,10 @@ import { checkOrCreateAssociatedTokenAccount, getLocalKeypair } from "../src";
 import { BN } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { initClientWithKeypairPath } from "./utils";
-import { marketPda } from "./constants";
+import { marketPda, vault_authority, vault_program, vault_state, vault_token_account } from "./constants";
 import { Side } from "../src";
-
-const fs = require('fs');
-const { Keypair } = require('@solana/web3.js');
-
+import fs from "fs";
+import { Keypair } from "@solana/web3.js";
 
 
 // Now you can use this keypair with your client initialization
@@ -102,9 +100,23 @@ const main = async () => {
 
   //args 
   // limit: BN;
+  
   // orderid: BN;
+  
+   
   // qty: BN;
   // side: Side;
+  const caller = keypair.publicKey;
+
+  const [userStatePda] = await PublicKey.findProgramAddress(
+    [
+      Buffer.from("user_state"),
+      vault_state.toBuffer(),
+      provider.wallet.publicKey.toBuffer()
+    ],
+    vault_program
+  );
+
 
   
   const [ix, signers] = await client.new_order_and_finalize(
@@ -127,6 +139,13 @@ const main = async () => {
     args.qty,
     args.side,
     keypair,
+    vault_state,
+    vault_authority,
+    userStatePda,
+    caller,
+    vault_program,
+    vault_token_account
+      
     
   );
 

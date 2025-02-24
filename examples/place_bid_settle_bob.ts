@@ -3,29 +3,33 @@ import { checkOrCreateAssociatedTokenAccount, getLocalKeypair } from "../src";
 import { BN } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { initClientWithKeypairPath } from "./utils";
-import { marketPda } from "./constants";
+import {
+  marketPda,
+  vault_authority,
+  vault_program,
+  vault_state,
+  vault_token_account,
+} from "./constants";
 import { Side } from "../src";
-
-const fs = require('fs');
-const { Keypair } = require('@solana/web3.js');
-
-
+import fs from "fs";
+import { Keypair } from "@solana/web3.js";
 
 // Now you can use this keypair with your client initialization
 //const client = initClientWithKeypair(keypair);
 
-
-
 // ensure opposite side (eg. limit ask by bob exists)
 const main = async () => {
-    // Read and parse the JSON file
-  const keypairPath = "./test-keypairs/alice/key.json";
-  const secretKey = Uint8Array.from(JSON.parse(fs.readFileSync(keypairPath, 'utf8')));
+  // Read and parse the JSON file
+  const alicekp = getLocalKeypair("./test-keypairs/alice/key.json");
+  const bobKeypairPath = "./test-keypairs/bob/key.json";
+  const secretKey = Uint8Array.from(
+    JSON.parse(fs.readFileSync(bobKeypairPath, "utf8"))
+  );
 
   // Create a Keypair object from the secret key
   const keypair = Keypair.fromSecretKey(secretKey);
-  const client = initClientWithKeypairPath("./test-keypairs/alice/key.json");
-  //kp = 
+  const client = initClientWithKeypairPath("./test-keypairs/bob/key.json");
+
   const market = await client.deserializeMarketAccount(
     new PublicKey(marketPda)
   );
@@ -96,18 +100,28 @@ const main = async () => {
     limit: new BN(0),
     orderid: new BN("1844674407370955161601"),
     qty: new BN(1),
-    side: Side.Ask,
+    side: Side.Bid,
   };
   console.log(args);
 
-  //args 
+  //args
   // limit: BN;
+
   // orderid: BN;
+
   // qty: BN;
   // side: Side;
-  
+  const caller = keypair.publicKey;
 
-  
+  const [userStatePda] = await PublicKey.findProgramAddress(
+    [
+      Buffer.from("user_state"),
+      vault_state.toBuffer(),
+      alicekp.publicKey.toBuffer(),
+    ],
+    vault_program
+  );
+
   const [ix, signers] = await client.new_order_and_finalize(
     args.market,
     args.marketAuthority,
@@ -128,7 +142,12 @@ const main = async () => {
     args.qty,
     args.side,
     keypair,
-    
+    vault_state,
+    vault_authority,
+    userStatePda,
+    caller,
+    vault_program,
+    vault_token_account
   );
 
   await client.sendAndConfirmTransaction([ix], {
